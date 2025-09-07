@@ -1,0 +1,10 @@
+# 环境
+.venv
+.vscode
+
+# 编译
+build
+dist
+*.egg-info
+*.pyc
+__pycache__

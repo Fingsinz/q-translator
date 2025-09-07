@@ -1,0 +1,9 @@
+{
+    "hotkey": "ctrl+q",
+    "apis": {
+        "Google": false,
+        "DeepL": false,
+        "Youdao": true,
+        "Baidu": true
+    }
+}

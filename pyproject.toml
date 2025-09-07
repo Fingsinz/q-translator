@@ -1,0 +1,17 @@
+[project]
+name = "q-translator"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "keyboard>=0.13.5",
+    "pillow>=11.3.0",
+    "pyinstaller>=6.15.0",
+    "pyperclip>=1.9.0",
+    "pystray>=0.19.5",
+]
+
+[[index]]
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+default = true
