@@ -20,6 +20,7 @@ from translator import APIS
 # 全局变量
 gui_queue = queue.Queue()
 config = Config()
+supported = ["自动", "英语", "中文", "日语", "韩语", "法语", "德语"]
 
 # ---------------- GUI ----------------
 class ResultWindow(tk.Toplevel):
@@ -32,7 +33,16 @@ class ResultWindow(tk.Toplevel):
             "Youdao": "有道翻译",
             "Baidu": "百度翻译"
         }
-        
+        self.d_mapping = {
+            "谷歌翻译": "Google",
+            "DeepL翻译": "DeepL",
+            "有道翻译": "Youdao",
+            "百度翻译": "Baidu"
+        }
+
+        self.history = {}
+        self.tabs = {}
+
         self.title("翻译结果")
         self.geometry("500x400")
 
@@ -43,40 +53,26 @@ class ResultWindow(tk.Toplevel):
         # 源语言选择
         tk.Label(lang_frame, text="源语言:").pack(side="left")
         self.source_lang = ttk.Combobox(lang_frame,
-                                        values=["auto", "en", "zh", "ja", "ko", "fr", "de"],
+                                        values=supported,
                                         state="readonly")
-        self.source_lang.set("auto")
+        self.source_lang.set("自动")
         self.source_lang.pack(side="left", padx=5)
 
         # 目标语言选择
         tk.Label(lang_frame, text="目标语言:").pack(side="left")
         self.target_lang = ttk.Combobox(lang_frame,
-                                        values=["zh", "en", "ja", "ko", "fr", "de"],
+                                        values=supported[1:],
                                         state="readonly")
-        self.target_lang.set("zh")
+        self.target_lang.set("中文")
         self.target_lang.pack(side="left", padx=5)
-        self.target_lang.bind("<<ComboboxSelected>>", lambda event: self.update_translation(text))
 
         # 翻译结果显示区域
         notebook = ttk.Notebook(self)
         notebook.pack(fill="both", expand=True)
-
-        # 初始化翻译结果
         self.notebook = notebook
         self.text = text
-        self.update_translation(text)
 
-    def update_translation(self, text):
-        """更新翻译"""
-        # 清除旧的翻译结果
-        for child in self.notebook.winfo_children():
-            child.destroy()
-
-        # 获取选择的语言对
-        source_lang = self.source_lang.get()
-        target_lang = self.target_lang.get()
-
-        # 更新翻译结果
+        # API 选择
         for api, info in config.config["apis"].items():
             enabled = info.get("enable", False)
             if enabled:
@@ -84,21 +80,50 @@ class ResultWindow(tk.Toplevel):
                 self.notebook.add(frame, text=self.mapping[api])
                 txt = tk.Text(frame, wrap="word", font=("微软雅黑", 16))
                 txt.pack(fill="both", expand=True)
+                self.tabs[api] = frame
 
-                # 调用翻译函数，传入语言对
-                if api == "Google":
-                    translated_text = APIS[api](text, source_lang, target_lang)
-                elif api == "DeepL":
-                    translated_text = APIS[api](text, target_lang)
-                elif api == "Youdao":
-                    translated_text = APIS[api](text, source_lang, target_lang)
-                elif api == "Baidu":
-                    translated_text = APIS[api](text, source_lang, target_lang)
-                else:
-                    translated_text = f"未知翻译API：{api}"
+        # 初始化翻译结果
+        self.notebook.bind("<<NotebookTabChanged>>",
+                           lambda event: self.update_translation(
+                               api=self.notebook.tab(self.notebook.select(), "text"),
+                               text=self.text
+                            ))
+        self.target_lang.bind("<<ComboboxSelected>>",
+                              lambda event: self.update_translation(
+                                  api=self.notebook.tab(self.notebook.select(), "text"),
+                                  text=self.text
+                               ))
 
-                txt.insert("1.0", translated_text)
-                txt.configure(state="disabled")
+        #self.update_translation(api=self.notebook.tab(self.notebook.select(), "text"),
+        #                        text=self.text)
+
+    def update_translation(self, api, text):
+        """更新翻译"""
+        api = self.d_mapping[api]
+
+        # 清除当前api的翻译结果
+        now_tab = self.tabs[api]
+        txt = now_tab.winfo_children()[0]
+        txt.delete("1.0", "end")
+
+        # 获取选择的语言对
+        source_lang = self.source_lang.get()
+        target_lang = self.target_lang.get()
+
+        # 更新翻译结果
+        if self.history.get(api):
+            if self.history[api][0] == source_lang and self.history[api][1] == target_lang:
+                print("Use history")
+                txt.insert("1.0", self.history[api][2])
+                return
+
+        print("Use API")
+        translator = APIS[api]
+        result = translator.translate(text, source_lang, target_lang)
+        self.history[api] = (source_lang, target_lang, result)
+
+        txt.insert("1.0", result)
+
 
 class SettingsWindow(tk.Toplevel):
     """设置窗口"""

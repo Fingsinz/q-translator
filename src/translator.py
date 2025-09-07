@@ -1,4 +1,5 @@
 import hashlib
+import time
 
 import requests
 
@@ -84,18 +85,20 @@ class DeeplTranslator:
 
 class YoudaoTranslator():
     """有道翻译器"""
-    def __init__(self):
-        self.lang = {
-            "auto": "auto",
-            "en": "en",
-            "zh": "zh-CHS",
-            "ja": "ja",
-            "ko": "ko",
-            "fr": "fr",
-            "de": "de"
-        }
-    def translate(self, text, source_lang="auto", target_lang="zh"):
+
+    @staticmethod
+    def translate(text, source_lang, target_lang):
         """翻译"""
+        lang = {
+            "自动": "auto",
+            "英语": "en",
+            "中文": "zh-CHS",
+            "日语": "ja",
+            "韩语": "ko",
+            "法语": "fr",
+            "德语": "de"
+        }
+
         try:
             app_id = config.get_api_key("Youdao", "appID")
             secret_key = config.get_api_key("Youdao", "secretKey")
@@ -104,11 +107,18 @@ class YoudaoTranslator():
 
             data = {
                 "q": text,
-                "from": source_lang,
-                "to": target_lang,
+                "from": lang[source_lang],
+                "to": lang[target_lang],
                 "appKey": app_id,
-                "secretKey": secret_key
+                "salt": "123",
+                "signType": "v3",
+                "curtime": str(int(time.time())),
             }
+            print(data['from'], data['to'])
+            data['sign'] = hashlib.sha256(
+                (data['appKey'] + text + data['salt'] +
+                 data['curtime'] + secret_key).encode("utf-8")
+            ).hexdigest()
 
             response = requests.post(
                 "https://openapi.youdao.com/api",
@@ -117,23 +127,30 @@ class YoudaoTranslator():
             )
 
             response.raise_for_status()
-            return response.json()["translation"][0]
+            r_json = response.json()
+            #print(response.json())
+
+            if r_json["errorCode"] != "0":
+                return "[有道翻译错误] " + r_json["errorCode"]
+
+            return r_json["translation"][0]
         except Exception as e:  # pylint: disable=broad-except
             return f"[有道翻译错误] {str(e)}"
 
 class BaiduTranslator():
     """百度翻译器"""
+
     @staticmethod
-    def translate(text, source_lang="auto", target_lang="zh"):
+    def translate(text, source_lang, target_lang):
         """翻译"""
         lang = {
-            "auto": "auto",
-            "en": "en",
-            "zh": "zh",
-            "ja": "jp",
-            "ko": 'kor',
-            "fr": "fra",
-            "de": "de"
+            "自动": "auto",
+            "英语": "en",
+            "中文": "zh",
+            "日语": "jp",
+            "韩语": 'kor',
+            "法语": "fra",
+            "德语": "de"
         }
 
         try:
@@ -161,8 +178,13 @@ class BaiduTranslator():
             )
 
             response.raise_for_status()
-            print(response.json())
-            return response.json()["trans_result"][0]["dst"]
+            r_json = response.json()
+            #print(r_json)
+
+            if r_json.get("error_code"):
+                return "[百度翻译错误] " + r_json["error_code"]
+
+            return r_json["trans_result"][0]["dst"]
         except Exception as e:  # pylint: disable=broad-except
             return f"[百度翻译错误] {str(e)}"
 
@@ -170,5 +192,5 @@ APIS = {
     "Google": GoogleTranslator(),
     "DeepL": DeeplTranslator(),
     "Youdao": YoudaoTranslator(),
-    "Baidu": BaiduTranslator().translate
+    "Baidu": BaiduTranslator()
 }
