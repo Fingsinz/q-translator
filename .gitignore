@@ -8,3 +8,6 @@ dist
 *.egg-info
 *.pyc
 __pycache__
+
+# 配置文件
+*config.json

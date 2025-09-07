@@ -167,9 +167,11 @@ def hotkey_worker():
 # ---------------- 托盘 ----------------
 def create_icon():
     """图标创建"""
-    img = Image.new("RGB",(64,64),(255,255,255))
+    img = Image.new("RGB", (64,64), (255,255,255))
     d = ImageDraw.Draw(img)
-    d.rectangle([16,16,48,48],fill=(0,0,0))
+    d.rectangle([12, 16, 56, 20], fill=(0,0,0))
+    d.rectangle([32, 24, 36, 56], fill=(0,0,0))
+    img.save("./icon.ico")
     return img
 
 def on_quit(icon, item):    # pylint: disable=unused-argument, disable=redefined-outer-name
@@ -183,10 +185,16 @@ def on_settings(icon, item):    # pylint: disable=unused-argument, disable=redef
 
 def tray_worker():
     """启动托盘"""
-    icon = Icon("translator",create_icon(),
-                menu=(
-                    item("设置",on_settings),
-                    item("退出",on_quit)
+    icon_path = "./icon.ico"
+    if not os.path.exists(icon_path):
+        icon_img = create_icon()
+    else:
+        icon_img = Image.open(icon_path)
+
+    icon = Icon("translator",
+                icon_img,
+                menu=(item("设置",on_settings),
+                      item("退出",on_quit)
                 )
     )
     icon.run()
