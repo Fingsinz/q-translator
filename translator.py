@@ -21,6 +21,7 @@ class GoogleTranslator:
 
     def translate(self, text, source_lang="auto", target_lang="zh"):
         """翻译"""
+
         try:
             api_key = config.get_api_key("Google", "key")
             if not api_key:
@@ -41,7 +42,7 @@ class GoogleTranslator:
 
             response.raise_for_status()
             return response.json()["data"]["translations"][0]["translatedText"]
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             return f"[Google翻译错误] {str(e)}"
 
 class DeeplTranslator:
@@ -78,7 +79,7 @@ class DeeplTranslator:
 
             response.raise_for_status()
             return response.json()["translations"][0]["text"]
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             return f"[DeepL翻译错误] {str(e)}"
 
 class YoudaoTranslator():
@@ -117,7 +118,7 @@ class YoudaoTranslator():
 
             response.raise_for_status()
             return response.json()["translation"][0]
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             return f"[有道翻译错误] {str(e)}"
 
 class BaiduTranslator():
@@ -162,7 +163,7 @@ class BaiduTranslator():
             response.raise_for_status()
             print(response.json())
             return response.json()["trans_result"][0]["dst"]
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             return f"[百度翻译错误] {str(e)}"
 
 APIS = {

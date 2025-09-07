@@ -172,12 +172,12 @@ def create_icon():
     d.rectangle([16,16,48,48],fill=(0,0,0))
     return img
 
-def on_quit(icon, item):
+def on_quit(icon, item):    # pylint: disable=unused-argument, disable=redefined-outer-name
     """退出程序"""
     icon.stop()
     os._exit(0)
 
-def on_settings(icon, item):
+def on_settings(icon, item):    # pylint: disable=unused-argument, disable=redefined-outer-name
     """响应设置页面"""
     gui_queue.put(("settings",None))
 
