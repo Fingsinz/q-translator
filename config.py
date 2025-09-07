@@ -6,28 +6,28 @@ CONFIG_FILE = "config.json"
 class Config:
     """配置管理类"""
     default = {
-        "hotkey": "ctrl+shift+t",
+        "hotkey": "ctrl+q",
         "apis": {
             "Google": {
-                "enable": True,
-                "key": "YOUR_GOOGLE_API_KEY"
+                "enable": False,
+                "key": ""
             },
 
             "DeepL": {
-                "enable": True,
-                "auth_key": "YOUR_DEEPL_API_KEY"
+                "enable": False,
+                "key": ""
             },
 
             "Youdao": {
-                "enable": True,
-                "appKey": "YOUR_YOUDAO_API_KEY",
-                "secretKey": "YOUR_YOUDAO_SECRET_KEY"
+                "enable": False,
+                "appID": "",
+                "secretKey": ""
             },
 
             "Baidu": {
                 "enable": True,
-                "appKey": "YOUR_BAIDU_API_KEY",
-                "secretKey": "YOUR_BAIDU_SECRET_KEY"
+                "appID": "",
+                "secretKey": ""
             }
         }
     }
