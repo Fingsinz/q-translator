@@ -40,6 +40,7 @@ pyinstaller -F -w main.py --icon=icon.ico
 
 ## Usage 使用
 
+0. 申请相关翻译的 Key, 并设置在配置文件 `config.json` 中;
 1. 鼠标光标选中文本;
 2. 按下快捷键 (并复制文本);
 3. 弹出窗口，源语言默认为 `auto`, 设置目标语言后自动调用 API 翻译.
