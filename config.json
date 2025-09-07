@@ -1,9 +1,26 @@
 {
     "hotkey": "ctrl+q",
     "apis": {
-        "Google": false,
-        "DeepL": false,
-        "Youdao": true,
-        "Baidu": true
+        "Google": {
+            "enable": false,
+            "key": ""
+        },
+
+        "DeepL": {
+            "enable": false,
+            "key": ""
+        },
+
+        "Youdao": {
+            "enable": false,
+            "appID": "",
+            "secretKey": ""
+        },
+
+        "Baidu": {
+            "enable": true,
+            "appID": "",
+            "secretKey": ""
+        }
     }
 }

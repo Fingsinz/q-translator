@@ -1,38 +1,107 @@
+# 标准库导入
+import os
 import queue
 import threading
 import time
 import tkinter as tk
 from tkinter import messagebox, ttk
 
+# 第三方库导入
 import keyboard
 import pyperclip
 from PIL import Image, ImageDraw
 from pystray import Icon
 from pystray import MenuItem as item
 
+# 本地模块导入
 from config import Config
 from translator import APIS
 
+# 全局变量
 gui_queue = queue.Queue()
 config = Config()
 
+# ---------------- GUI ----------------
 class ResultWindow(tk.Toplevel):
+    """结果窗口"""
     def __init__(self, text):
         super().__init__()
+        self.mapping = {
+            "Google": "谷歌翻译",
+            "DeepL": "DeepL翻译",
+            "Youdao": "有道翻译",
+            "Baidu": "百度翻译"
+        }
+        
         self.title("翻译结果")
-        self.geometry("500x300")
+        self.geometry("500x400")
+
+        # 语言选择区域
+        lang_frame = ttk.Frame(self)
+        lang_frame.pack(fill="x", padx=5, pady=5)
+
+        # 源语言选择
+        tk.Label(lang_frame, text="源语言:").pack(side="left")
+        self.source_lang = ttk.Combobox(lang_frame,
+                                        values=["auto", "en", "zh", "ja", "ko", "fr", "de"],
+                                        state="readonly")
+        self.source_lang.set("auto")
+        self.source_lang.pack(side="left", padx=5)
+
+        # 目标语言选择
+        tk.Label(lang_frame, text="目标语言:").pack(side="left")
+        self.target_lang = ttk.Combobox(lang_frame,
+                                        values=["zh", "en", "ja", "ko", "fr", "de"],
+                                        state="readonly")
+        self.target_lang.set("zh")
+        self.target_lang.pack(side="left", padx=5)
+        self.target_lang.bind("<<ComboboxSelected>>", lambda event: self.update_translation(text))
+
+        # 翻译结果显示区域
         notebook = ttk.Notebook(self)
         notebook.pack(fill="both", expand=True)
-        for api, enabled in Config().config["apis"].items():
+
+        # 初始化翻译结果
+        self.notebook = notebook
+        self.text = text
+        self.update_translation(text)
+
+    def update_translation(self, text):
+        """更新翻译"""
+        # 清除旧的翻译结果
+        for child in self.notebook.winfo_children():
+            child.destroy()
+
+        # 获取选择的语言对
+        source_lang = self.source_lang.get()
+        target_lang = self.target_lang.get()
+
+        # 更新翻译结果
+        for api, info in config.config["apis"].items():
+            enabled = info.get("enable", False)
             if enabled:
-                frame = ttk.Frame(notebook)
-                notebook.add(frame, text=api)
-                txt = tk.Text(frame, wrap="word")
+                frame = ttk.Frame(self.notebook)
+                self.notebook.add(frame, text=self.mapping[api])
+                txt = tk.Text(frame, wrap="word", font=("微软雅黑", 16))
                 txt.pack(fill="both", expand=True)
-                txt.insert("1.0", APIS[api](text))
+
+                # 调用翻译函数，传入语言对
+                if api == "Google":
+                    translated_text = APIS[api](text, source_lang, target_lang)
+                elif api == "DeepL":
+                    translated_text = APIS[api](text, target_lang)
+                elif api == "Youdao":
+                    translated_text = APIS[api](text, source_lang, target_lang)
+                elif api == "Baidu":
+                    translated_text = APIS[api](text, source_lang, target_lang)
+                else:
+                    translated_text = f"未知翻译API：{api}"
+
+                txt.insert("1.0", translated_text)
                 txt.configure(state="disabled")
 
 class SettingsWindow(tk.Toplevel):
+    """设置窗口"""
     def __init__(self, master):
         super().__init__(master)
         self.title("设置")
@@ -43,79 +112,100 @@ class SettingsWindow(tk.Toplevel):
         # 快捷键
         tab1 = ttk.Frame(notebook)
         notebook.add(tab1, text="快捷键")
-        self.hk_var = tk.StringVar(value=Config().config["hotkey"])
-        tk.Label(tab1, text="快捷键:").pack(pady=5)
-        self.hk_entry = tk.Entry(tab1, textvariable=self.hk_var)
+        self.hk_var = tk.StringVar(value=config.config["hotkey"])
+        tk.Label(tab1,text="快捷键:").pack(pady=5)
+
+        self.hk_entry = tk.Entry(tab1,textvariable=self.hk_var)
         self.hk_entry.pack(pady=5)
-        tk.Button(tab1, text="录制快捷键", command=self.record_hotkey).pack(pady=5)
+        tk.Button(tab1,text="录制快捷键",command=self.record_hotkey).pack(pady=5)
 
         # API
         tab2 = ttk.Frame(notebook)
         notebook.add(tab2, text="翻译API")
         self.api_vars = {}
-        for api in APIS.keys():
-            var = tk.BooleanVar(value=Config().config["apis"].get(api, False))
-            chk = tk.Checkbutton(tab2, text=api, variable=var)
+
+        api_name = APIS.keys()
+        for api in api_name:
+            var = tk.BooleanVar(value=str(config.config["apis"].get(api, {}).get("enable", False)))
+            chk = tk.Checkbutton(tab2,text=api,variable=var)
             chk.pack(anchor="w")
             self.api_vars[api] = var
 
-        tk.Button(self, text="保存并应用", command=self.save_config).pack(pady=10)
+        tk.Button(self,text="保存并应用",command=self.save_config).pack(pady=10)
 
     def record_hotkey(self):
+        """录制快捷键"""
         self.hk_var.set("（按组合键）")
         hotkey = keyboard.read_hotkey(suppress=False)
         self.hk_var.set(hotkey)
 
     def save_config(self):
-        config = Config()
+        """保存配置"""
         config.config["hotkey"] = self.hk_var.get()
         for api, var in self.api_vars.items():
             config.config["apis"][api] = var.get()
         config.save()
-        messagebox.showinfo("提示", "配置已保存！")
+        messagebox.showinfo("提示","配置已保存！")
 
 # ---------------- 热键 ----------------
 def get_clipboard_text():
+    """获取剪贴板文本"""
     keyboard.send("ctrl+c")
     time.sleep(0.05)
     return pyperclip.paste()
 
 def hotkey_worker():
+    """响应快捷键"""
     def callback():
         config.load()  # 热加载
-        text=get_clipboard_text()
-        if text.strip(): gui_queue.put(("result", text))
+        text = get_clipboard_text()
+        if text.strip():
+            gui_queue.put(("result", text))
     keyboard.add_hotkey(config.config["hotkey"], callback)
     keyboard.wait()
 
 # ---------------- 托盘 ----------------
 def create_icon():
-    img=Image.new("RGB",(64,64),(255,255,255))
-    d=ImageDraw.Draw(img)
+    """图标创建"""
+    img = Image.new("RGB",(64,64),(255,255,255))
+    d = ImageDraw.Draw(img)
     d.rectangle([16,16,48,48],fill=(0,0,0))
     return img
 
-def on_quit(icon,item): icon.stop(); os._exit(0)
-def on_settings(icon,item): gui_queue.put(("settings",None))
+def on_quit(icon, item):
+    """退出程序"""
+    icon.stop()
+    os._exit(0)
+
+def on_settings(icon, item):
+    """响应设置页面"""
+    gui_queue.put(("settings",None))
 
 def tray_worker():
-    icon=Icon("translator",create_icon(),menu=(
-        item("设置",on_settings),
-        item("退出",on_quit)
-    ))
+    """启动托盘"""
+    icon = Icon("translator",create_icon(),
+                menu=(
+                    item("设置",on_settings),
+                    item("退出",on_quit)
+                )
+    )
     icon.run()
 
 # ---------------- 主线程 GUI 循环 ----------------
 def gui_loop():
-    root=tk.Tk()
+    """主线程循环"""
+    root = tk.Tk()
     root.withdraw()
     def check_queue():
         try:
             while True:
-                task,data=gui_queue.get_nowait()
-                if task=="settings": SettingsWindow(root)
-                elif task=="result": ResultWindow(data)
-        except queue.Empty: pass
+                task, data = gui_queue.get_nowait()
+                if task == "settings":
+                    SettingsWindow(root)
+                elif task == "result":
+                    ResultWindow(data)
+        except queue.Empty:
+            pass
         root.after(100,check_queue)
     root.after(100,check_queue)
     root.mainloop()
