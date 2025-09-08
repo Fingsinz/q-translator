@@ -5,9 +5,7 @@ name: q-translator
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches: [ "release" ]
 
 permissions:
   contents: read
@@ -42,10 +40,5 @@ jobs:
         name: q-translator-exe
         path: src/dist/q-translator.exe
 
-    - name: Release executable
-      uses: softprops/action-gh-release@v1
-      if: github.ref == 'refs/heads/main'
-      with:
-        files: src/dist/q-translator.exe
 
 
