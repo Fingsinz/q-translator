@@ -33,6 +33,7 @@ jobs:
       run: |
         cd src
         ..\.venv\Scripts\pyinstaller.exe -F -w main.py --icon=icon.ico
+        cd dist
         ren main.exe q-translator.exe
 
     - name: Upload executable
