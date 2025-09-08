@@ -31,6 +31,7 @@ jobs:
         uv sync
     - name: build
       run: |
-        pyinstaller -F -w main.py --icon=src/icon.ico
+        cd src
+        ..\.venv\Scripts\pyinstaller.exe -F -w main.py --icon=icon.ico
 
 
