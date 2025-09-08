@@ -33,5 +33,18 @@ jobs:
       run: |
         cd src
         ..\.venv\Scripts\pyinstaller.exe -F -w main.py --icon=icon.ico
+        ren main.exe q-translator.exe
+
+    - name: Upload executable
+      uses: actions/upload-artifact@v4
+      with:
+        name: q-translator-exe
+        path: src/dist/q-translator.exe
+
+    - name: Release executable
+      uses: softprops/action-gh-release@v1
+      if: github.ref == 'refs/heads/main'
+      with:
+        files: src/dist/q-translator.exe
 
 
