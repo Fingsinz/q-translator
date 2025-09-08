@@ -1,3 +1,5 @@
+"""翻译器模块"""
+
 import hashlib
 import time
 
@@ -114,9 +116,12 @@ class YoudaoTranslator():
                 "signType": "v3",
                 "curtime": str(int(time.time())),
             }
-            print(data['from'], data['to'])
+
+            q_len = len(text)
+            q = text if q_len < 20 else text[:10] + str(q_len) + text[-10:]
+
             data['sign'] = hashlib.sha256(
-                (data['appKey'] + text + data['salt'] +
+                (data['appKey'] + q + data['salt'] +
                  data['curtime'] + secret_key).encode("utf-8")
             ).hexdigest()
 

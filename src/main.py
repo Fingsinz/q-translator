@@ -1,3 +1,5 @@
+"""主模块"""
+
 # 标准库导入
 import os
 import queue
@@ -16,11 +18,12 @@ from pystray import MenuItem as item
 # 本地模块导入
 from config import Config
 from translator import APIS
+from utils import check_zh
 
 # 全局变量
 gui_queue = queue.Queue()
 config = Config()
-supported = ["自动", "英语", "中文", "日语", "韩语", "法语", "德语"]
+supported_lang = ["自动", "英语", "中文", "日语", "韩语", "法语", "德语"]
 
 # ---------------- GUI ----------------
 class ResultWindow(tk.Toplevel):
@@ -44,7 +47,10 @@ class ResultWindow(tk.Toplevel):
         self.tabs = {}
 
         self.title("翻译结果")
-        self.geometry("500x400")
+        # 获取鼠标当前位置并设置窗口位置
+        x = self.winfo_pointerx()
+        y = self.winfo_pointery()
+        self.geometry(f"500x400+{x}+{y}")
 
         # 语言选择区域
         lang_frame = ttk.Frame(self)
@@ -53,18 +59,35 @@ class ResultWindow(tk.Toplevel):
         # 源语言选择
         tk.Label(lang_frame, text="源语言:").pack(side="left")
         self.source_lang = ttk.Combobox(lang_frame,
-                                        values=supported,
+                                        values=supported_lang,
                                         state="readonly")
-        self.source_lang.set("自动")
         self.source_lang.pack(side="left", padx=5)
 
         # 目标语言选择
         tk.Label(lang_frame, text="目标语言:").pack(side="left")
         self.target_lang = ttk.Combobox(lang_frame,
-                                        values=supported[1:],
+                                        values=supported_lang[1:],
                                         state="readonly")
-        self.target_lang.set("中文")
         self.target_lang.pack(side="left", padx=5)
+
+        is_zh = check_zh(text)
+        if is_zh:
+            self.source_lang.set("中文")
+            self.target_lang.set("英语")
+        else:
+            self.source_lang.set("自动")
+            self.target_lang.set("中文")
+
+        # 添加“复制并关闭”按钮
+        button_frame = ttk.Frame(lang_frame)
+        button_frame.pack(fill="x", padx=5, pady=5)
+
+        copy_button = ttk.Button(
+            button_frame,
+            text="复制并关闭",
+            command=self.copy_and_close
+        )
+        copy_button.pack(side="right", padx=5)
 
         # 翻译结果显示区域
         notebook = ttk.Notebook(self)
@@ -113,16 +136,28 @@ class ResultWindow(tk.Toplevel):
         # 更新翻译结果
         if self.history.get(api):
             if self.history[api][0] == source_lang and self.history[api][1] == target_lang:
-                print("Use history")
+                #print("Use history")
                 txt.insert("1.0", self.history[api][2])
                 return
 
-        print("Use API")
+        #print("Use API")
         translator = APIS[api]
         result = translator.translate(text, source_lang, target_lang)
         self.history[api] = (source_lang, target_lang, result)
 
         txt.insert("1.0", result)
+
+    def copy_and_close(self):
+        """复制当前翻译结果并关闭窗口"""
+        api = self.d_mapping[self.notebook.tab(self.notebook.select(), "text")]
+        now_tab = self.tabs[api]
+        txt = now_tab.winfo_children()[0]
+        text = txt.get("1.0", "end")
+        text = text.strip()
+
+        # 复制到剪贴板
+        pyperclip.copy(text)
+        self.destroy()
 
 
 class SettingsWindow(tk.Toplevel):
