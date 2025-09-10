@@ -1,3 +1,5 @@
+"""配置管理模块"""
+
 import json
 import os
 
