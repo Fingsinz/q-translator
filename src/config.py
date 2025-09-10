@@ -10,16 +10,6 @@ class Config:
     default = {
         "hotkey": "ctrl+q",
         "apis": {
-            "Google": {
-                "enable": False,
-                "key": ""
-            },
-
-            "DeepL": {
-                "enable": False,
-                "key": ""
-            },
-
             "Youdao": {
                 "enable": False,
                 "appID": "",
