@@ -98,7 +98,7 @@ class BaiduTranslator():
             }
 
             data['sign'] = hashlib.md5(
-                (data['appid'] + text + data['salt'] + secret_key).encode()
+                (data['appid'] + text + data['salt'] + secret_key).encode("utf-8")
             ).hexdigest()
 
             response = requests.post(
@@ -114,7 +114,11 @@ class BaiduTranslator():
             if r_json.get("error_code"):
                 return "[百度翻译错误] " + r_json["error_code"]
 
-            return r_json["trans_result"][0]["dst"]
+            return_str = ""
+            for result in r_json["trans_result"]:
+                return_str += result["dst"] + "\n"
+            return return_str
+
         except Exception as e:  # pylint: disable=broad-except
             return f"[百度翻译错误] {str(e)}"
 
