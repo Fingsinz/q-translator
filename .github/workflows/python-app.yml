@@ -5,7 +5,7 @@ name: q-translator
 
 on:
   push:
-    branches: [ "release" ]
+    branches: [ "main" ]
 
 permissions:
   contents: read

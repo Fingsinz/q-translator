@@ -203,7 +203,7 @@ class SettingsWindow(tk.Toplevel):
         """保存配置"""
         config.config["hotkey"] = self.hk_var.get()
         for api, var in self.api_vars.items():
-            config.config["apis"][api] = var.get()
+            config.config["apis"][api]['enable'] = var.get()
         config.save()
         messagebox.showinfo("提示","配置已保存！")
 

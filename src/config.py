@@ -1,3 +1,5 @@
+"""配置管理模块"""
+
 import json
 import os
 
@@ -8,16 +10,6 @@ class Config:
     default = {
         "hotkey": "ctrl+q",
         "apis": {
-            "Google": {
-                "enable": False,
-                "key": ""
-            },
-
-            "DeepL": {
-                "enable": False,
-                "key": ""
-            },
-
             "Youdao": {
                 "enable": False,
                 "appID": "",
